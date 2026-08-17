@@ -54,6 +54,12 @@ def _scrape_fixture(name: str, url: str):
             "imperial_units.md",
             False,
         ),
+        (
+            "microdata_directions_missing.html",
+            "https://example.com/blondies",
+            "microdata_directions_missing.md",
+            False,
+        ),
     ],
 )
 def test_render_matches_golden_file(
@@ -119,6 +125,21 @@ def test_ingredient_groups_become_bold_subheadings() -> None:
     )
     names = [group.name for group in recipe.ingredient_groups]
     assert names == ["Cake", "Frosting"]
+
+
+def test_microdata_page_with_no_recipeinstructions_yields_empty_directions() -> None:
+    # Regression test for smittenkitchen.com: its Jetpack recipe plugin marks up the
+    # title, yield, time and each ingredient with itemprop attributes, but the
+    # directions div carries no itemprop="recipeInstructions" (or any schema.org
+    # signal) at all. recipe-scrapers' generic schema.org fallback has nothing to read
+    # for directions in that case, so it correctly comes back empty rather than
+    # guessing at which part of the page's freeform HTML is a cooking step -- this is
+    # a genuine markup gap on the source site, not a scraper bug. app.pipeline turns
+    # this into a "no directions found" warning so it's visible instead of silent.
+    recipe = _scrape_fixture("microdata_directions_missing.html", "https://example.com/blondies")
+    assert recipe.title == "Blondies, Infinitely Adaptable"
+    assert any(group.items for group in recipe.ingredient_groups)
+    assert recipe.directions == []
 
 
 def test_page_with_no_title_or_ingredients_fails_to_scrape() -> None:

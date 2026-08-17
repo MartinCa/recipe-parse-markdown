@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Blondies, Infinitely Adaptable</title>
+</head>
+<body>
+  <article>
+    <h1>Blondies, Infinitely Adaptable</h1>
+    <!--
+      Regression fixture for smittenkitchen.com: WordPress's Jetpack recipe plugin marks
+      up the title, yield, time and each ingredient with itemprop attributes, but its
+      directions div carries none -- there is no recipeInstructions signal anywhere on
+      the page, so the generic schema.org scraper can find everything except the steps.
+    -->
+    <div class="hrecipe h-recipe jetpack-recipe" itemscope itemtype="https://schema.org/Recipe">
+      <h3 class="p-name jetpack-recipe-title fn" itemprop="name">Blondies, Infinitely Adaptable</h3>
+      <ul class="jetpack-recipe-meta">
+        <li class="jetpack-recipe-servings p-yield yield" itemprop="recipeYield"><strong>Servings: </strong>16 or more</li>
+        <li class="jetpack-recipe-time">
+          <time itemprop="totalTime" datetime="P0DT0H40M0S"><strong>Time:</strong> <span class="time">40 minutes</span></time>
+        </li>
+      </ul>
+      <div class="jetpack-recipe-content">
+        <div class="jetpack-recipe-ingredients">
+          <ul>
+            <li class="jetpack-recipe-ingredient p-ingredient ingredient" itemprop="recipeIngredient">8 tablespoons (1 stick) unsalted butter</li>
+            <li class="jetpack-recipe-ingredient p-ingredient ingredient" itemprop="recipeIngredient">1 cup light or dark brown sugar</li>
+            <li class="jetpack-recipe-ingredient p-ingredient ingredient" itemprop="recipeIngredient">1 large egg</li>
+            <li class="jetpack-recipe-ingredient p-ingredient ingredient" itemprop="recipeIngredient">1 cup all-purpose flour</li>
+          </ul>
+        </div>
+        <div class="jetpack-recipe-directions e-instructions">Heat oven to 350&deg;F. Butter an 8x8-inch baking pan.
+        <p>Melt butter, whisk in sugar, egg and flour. Pour into pan and bake for 20 to 25 minutes.</p>
+        </div>
+      </div>
+    </div>
+  </article>
+</body>
+</html>
