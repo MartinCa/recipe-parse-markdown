@@ -1,0 +1,35 @@
+# Example deployment. Copy, edit, and `docker compose up -d`.
+#
+# There is deliberately no authentication -- put this behind whatever auth proxy
+# you already run (authentik, Authelia, Caddy forward-auth, Tailscale, ...).
+
+services:
+  recipe2md:
+    image: ghcr.io/martinca/recipe2md:latest
+    # To build from a checkout instead of pulling, comment out `image` and use:
+    # build: .
+    container_name: recipe2md
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      MAX_HTML_BYTES: "5242880"
+      MAX_URLS_PER_BATCH: "25"
+      REQUEST_TIMEOUT: "20"
+      SCRAPE_CONCURRENCY: "4"
+      IMAGE_MAX_EDGE: "1600"
+      IMAGE_QUALITY: "85"
+      # Only enable if you intend to scrape hosts on your own network.
+      ALLOW_PRIVATE_URLS: "false"
+      LOG_LEVEL: "INFO"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=3).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

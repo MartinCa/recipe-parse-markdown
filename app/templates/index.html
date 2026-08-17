@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>recipe2md</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#127858;</text></svg>"
+    />
+  </head>
+  <body>
+    <header>
+      <h1>recipe2md</h1>
+      <p class="tagline">Recipe URL(s) in, Obsidian-ready Markdown out, zipped.</p>
+    </header>
+
+    <main>
+      {% if error %}
+      <p class="notice error">{{ error }}</p>
+      {% endif %}
+
+      <form id="scrape-form" method="post" action="/scrape">
+        <label for="urls">
+          URLs, one per line
+          <span class="hint">One URL is the common case; several make a batch.</span>
+        </label>
+        <textarea id="urls" name="urls" rows="6" placeholder="https://example.com/a-recipe" required>{{ urls_text }}</textarea>
+
+        <details id="html-details">
+          <summary>Paste HTML instead (for sites that block server-side fetches)</summary>
+          <p class="hint">
+            Only valid together with exactly one URL above. Paste
+            <code>document.documentElement.outerHTML</code> -- not view-source, since many
+            recipe sites render their content with JavaScript after the page loads.
+          </p>
+          <label for="html" class="visually-hidden">Pasted HTML</label>
+          <textarea id="html" name="html" rows="8" placeholder="&lt;html&gt;...">{{ html_text }}</textarea>
+
+          <p class="hint">
+            Grab it with this bookmarklet: create a new bookmark, paste the code below as its
+            URL, then click it on the recipe page.
+          </p>
+          <pre><code>{{ bookmarklet }}</code></pre>
+          <p class="hint">
+            The clipboard API needs HTTPS and a user gesture, so this works from the
+            bookmarks bar but not from the address bar in some browsers.
+          </p>
+        </details>
+
+        <button type="submit">Get Markdown</button>
+      </form>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
