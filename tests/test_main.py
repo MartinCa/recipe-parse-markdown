@@ -155,6 +155,35 @@ async def test_scrape_image_fetch_failure_is_a_warning_not_a_failure(
     assert "fluffy-pancakes.jpg" in errors_text
 
 
+async def test_scrape_warns_when_no_directions_are_found(client: httpx.AsyncClient) -> None:
+    html = """
+    <!doctype html><html><head>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Recipe",
+      "name": "Directionless Soup",
+      "recipeIngredient": ["1 kg tomatoes"]
+    }
+    </script>
+    </head><body></body></html>
+    """
+
+    with respx.mock:
+        response = await client.post(
+            "/scrape",
+            data={"urls": "https://example.com/directionless-soup", "html": html},
+        )
+
+    assert response.status_code == 200
+    names = _zip_names(response.content)
+    assert "Directionless Soup.md" in names
+    assert "_errors.txt" in names
+    with zipfile.ZipFile(BytesIO(response.content)) as archive:
+        errors_text = archive.read("_errors.txt").decode("utf-8")
+    assert "no directions found" in errors_text
+
+
 async def test_scrape_uses_pasted_html_without_fetching_the_page(
     client: httpx.AsyncClient,
 ) -> None:
@@ -199,6 +228,45 @@ async def test_scrape_rejects_oversize_pasted_html(client: httpx.AsyncClient) ->
         )
         assert response.status_code == 400
         assert "exceeds" in response.text
+
+
+async def test_scrape_accepts_pasted_html_over_one_megabyte(client: httpx.AsyncClient) -> None:
+    # Regression test: Starlette's request.form() rejects any single field over 1MB by
+    # default, regardless of our own (much larger) max_html_bytes setting. Before the
+    # fix, this returned a raw `{"detail": "..."}` 400 instead of ever reaching our
+    # validation or the scraper.
+    padded_html = _fixture_html("no_image.html") + ("<!-- " + "x" * 1_100_000 + " -->")
+    assert len(padded_html.encode("utf-8")) > 1_048_576
+
+    with respx.mock:
+        response = await client.post(
+            "/scrape",
+            data={"urls": "https://example.com/simple-tomato-soup", "html": padded_html},
+        )
+
+    assert response.status_code == 200
+    assert "Simple Tomato Soup.md" in _zip_names(response.content)
+
+
+async def test_scrape_accepts_multipart_html_over_one_megabyte(
+    client: httpx.AsyncClient,
+) -> None:
+    # Same as above, but forcing multipart/form-data encoding (what a real browser
+    # sends via `new FormData(form)`), since Starlette enforces the 1MB-per-field
+    # default on both the urlencoded and multipart parsers independently.
+    padded_html = _fixture_html("no_image.html") + ("<!-- " + "x" * 1_100_000 + " -->")
+
+    with respx.mock:
+        response = await client.post(
+            "/scrape",
+            files={
+                "urls": (None, "https://example.com/simple-tomato-soup"),
+                "html": (None, padded_html),
+            },
+        )
+
+    assert response.status_code == 200
+    assert "Simple Tomato Soup.md" in _zip_names(response.content)
 
 
 async def test_scrape_rejects_empty_submission(client: httpx.AsyncClient) -> None:

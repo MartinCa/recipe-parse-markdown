@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
-from fastapi import FastAPI, Form, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -66,7 +66,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return templates.TemplateResponse(request, "index.html", form_context())
 
     @app.post("/scrape")
-    async def do_scrape(request: Request, urls: str = Form(""), html: str = Form("")) -> Response:
+    async def do_scrape(request: Request) -> Response:
+        # FastAPI's Form() dependency calls request.form() with Starlette's default
+        # max_part_size (1MB per field), which rejects large pasted HTML long before
+        # our own max_html_bytes check ever runs -- surfacing a raw, unstyled 400.
+        # Parsing the form ourselves lets _validate() be the one limit that matters.
+        form_max_part_size = max(settings.max_html_bytes * 2, 2 * 1024 * 1024)
+        form = await request.form(max_part_size=form_max_part_size)
+        urls = str(form.get("urls", ""))
+        html = str(form.get("html", ""))
         url_list = [line.strip() for line in urls.splitlines() if line.strip()]
         html_text = html.strip()
 

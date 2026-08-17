@@ -41,6 +41,8 @@ async def process_url(
         return ScrapeOutcome(url=url, error=str(exc))
 
     warnings: list[str] = []
+    if not recipe.directions:
+        warnings.append("no directions found on page -- Directions section left empty")
     if recipe.image_url:
         try:
             raw = await fetch_bytes(client, recipe.image_url, settings=settings)

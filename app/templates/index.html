@@ -18,7 +18,7 @@
 
     <main>
       {% if error %}
-      <p class="notice error">{{ error }}</p>
+      <p class="notice error" id="error-notice">{{ error }}</p>
       {% endif %}
 
       <form id="scrape-form" method="post" action="/scrape">
